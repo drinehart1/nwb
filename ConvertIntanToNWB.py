@@ -26,7 +26,12 @@ def convert_to_nwb(settings_filename=None,
                    surgery=None,
                    pharmacology=None,
                    stimulus_notes=None,
-                   manual_start_time=None
+                   manual_start_time=None,
+                   exp_identifier=None,
+                   electrode_mappings=None,
+                   experimenter=None,
+                   institution=None,
+                   electrode_headers=None
                   ):
     """ Convert the specified Intan file(s) to NWB format.
     
@@ -190,37 +195,40 @@ def convert_to_nwb(settings_filename=None,
             out_filename = nwb_filename
         else:
             out_filename = nwb_filename + '.nwb'
-    #
+
     # If manual start time was specified, overwrite the automatically generated start time
     if manual_start_time is not None:
         session_start_time = manual_start_time
-    
+
     # If session description wasnn't provided, get notes from header
     if session_description is None:
         if not (header['notes']['note1'] or header['notes']['note2'] or header['notes']['note3']):
             session_description = 'no description provided'
         else:
             session_description = header['notes']['note1'] + ', ' + header['notes']['note2'] + ', ' + header['notes']['note3']
-    
+
     # Set up NWB file
     nwbfile = pynwb.NWBFile(session_description=session_description,
-                            identifier=out_filename[:-4],
+                            identifier=exp_identifier + "; " + out_filename[:-4], #1-DEC-2022 mod
                             session_start_time=session_start_time,
                             surgery=None, #add: Duane 17-NOV-2022
-                            pharmacology=None, #add: Duane 17-NOV-2022
+                            pharmacology=pharmacology, #add: Duane 17-NOV-2022
                             stimulus_notes=stimulus_notes, #add: Duane 18-NOV-2022
+                            experimenter=experimenter,
+                            institution=institution,
                             subject=subject
                            )
-    
+
     # If suitable, create an 'ecephys' Processing Module for low/highpass data
     if header['lowpass_present'] or header['highpass_present']:
         ecephys_module = nwbfile.create_processing_module(name='ecephys', description='software-filtered ecephys data')
-    
+
     # Create 'device' object
     intan_device = create_intan_device(nwbfile, header)
     
     # Create 'electrode_table_region' object
-    electrode_table_region = create_electrode_table_region(nwbfile, header, intan_device)
+    print('CREATING ELECTRODE TABLE REGION')
+    electrode_table_region = create_electrode_table_region(nwbfile, header, intan_device, electrode_mappings, electrode_headers)
     
     # Initialize variables before conversion begins
     chunks_to_read = initialize_chunk_list(total_num_data_blocks, blocks_per_chunk)

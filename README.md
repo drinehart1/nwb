@@ -5,6 +5,7 @@
 Currently supported experimental data is:
 1. Widefield Imaging (meta-data only)
 2. Extracellular electrophysiology (Intan -> NWB data conversion)
+    + See README-ephys.md for detailed information
 3. Calcium imaging (WIP)
 
 ## Steps for running (manual):
